@@ -1,4 +1,4 @@
-from pydantic import BaseModel,ConfigDict,EmailStr,Field
+from pydantic import BaseModel,ConfigDict,EmailStr,Field,model_validator
 from datetime import datetime,date
 from typing import Literal
 
@@ -62,8 +62,22 @@ class TaskResponse(BaseModel):
     employee_id: int | None
 
 class TaskUpdate(BaseModel):
-    title: str|None = None
-    description: str|None = None
-    status: str|None = None
-    priority: int|None = None
-    deadline: date|None = None
+    title: str | None = Field(default=None, min_length=1, max_length=200)
+    description: str | None = None
+    status: TaskStatus | None = None
+    priority: int | None = Field(default=None, ge=1, le=5)
+    deadline: date | None = None
+    project_id: int | None = None
+    employee_id: int | None = None
+    @model_validator(mode="after")
+    def reject_null_required_fields(self):
+        for field in ("title", "status", "priority", "project_id"):
+            if field in self.model_fields_set and getattr(self, field) is None:
+                raise ValueError(f"{field} cannot be null")
+        return self
+
+class TaskAssign(BaseModel):
+    employee_id: int | None
+
+class TaskStatusUpdate(BaseModel):
+    status: TaskStatus
