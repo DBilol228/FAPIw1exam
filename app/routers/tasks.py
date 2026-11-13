@@ -6,6 +6,7 @@ from datetime import date
 from typing import Annotated
 from fastapi import APIRouter,Depends, HTTPException, Query, Response
 from sqlalchemy.orm import Session
+from app.dependencies import AdminUser
 
 router = APIRouter(prefix="/tasks",tags=["Tasks"])
 DB = Annotated[Session, Depends(get_db)]
@@ -42,7 +43,7 @@ def read_task(task_id: int, db: DB):
     return task
 
 @router.post("/",response_model=TaskResponse, status_code=201)
-def create_task(data: TaskCreate, db: DB):
+def create_task(data: TaskCreate, db: DB, admin: AdminUser):
     if crud.get_project(db, data.project_id) is None:
         raise HTTPException(404, "Project not found")
     if data.employee_id is not None:
@@ -85,7 +86,7 @@ def patch_task(task_id: int, data: TaskUpdate, db: DB):
     return crud.update_task(db, task, data, partial=True)
 
 @router.delete("/{task_id}", status_code=204)
-def delete_task(task_id: int, db: DB):
+def delete_task(task_id: int, db: DB, admin: AdminUser):
     task = crud.get_task(db, task_id)
     if task is None:
         raise HTTPException(404,"Task not found")
@@ -93,7 +94,7 @@ def delete_task(task_id: int, db: DB):
     return Response(status_code=204)
 
 @router.patch("/{task_id}/assign", response_model=TaskResponse)
-def assign_task(task_id: int, data: TaskAssign, db: DB):
+def assign_task(task_id: int, data: TaskAssign, db: DB, admin: AdminUser):
     task = crud.get_task(db, task_id)
     if task is None:
         raise HTTPException(404,"Task not found")

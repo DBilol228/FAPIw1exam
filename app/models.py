@@ -34,3 +34,11 @@ class Task(Base):
     employee_id: Mapped[int | None] = mapped_column(ForeignKey("employees.id"),nullable=True)
     project = relationship("Project",back_populates="tasks")
     employee = relationship("Employee",back_populates="tasks")
+
+class User(Base):
+    __tablename__ = "users"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    username: Mapped[str] = mapped_column(String(50), unique=True, index=True)
+    hashed_password: Mapped[str] = mapped_column(String(255))
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    is_admin: Mapped[bool] = mapped_column(Boolean, default=False)

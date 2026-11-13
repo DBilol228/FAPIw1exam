@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from app import crud
 from app.database import get_db
 from app.schemas import ProjectResponse,ProjectCreate,ProjectUpdate,TaskResponse
+from app.dependencies import AdminUser
 
 router = APIRouter(prefix="/projects", tags=["Projects"])
 DB = Annotated[Session, Depends(get_db)]
@@ -20,13 +21,13 @@ def read_project(project_id: int, db: DB):
     return project
 
 @router.post("/", response_model=ProjectResponse, status_code=201)
-def create_project(data: ProjectCreate, db: DB):
+def create_project(data: ProjectCreate, db: DB, admin: AdminUser):
     if crud.get_project_by_name(db, data.name):
         raise HTTPException(400, "Project name already exists")
     return crud.create_project(db, data)
 
 @router.put("/{project_id}", response_model=ProjectResponse)
-def update_project(project_id: int, data: ProjectUpdate, db: DB):
+def update_project(project_id: int, data: ProjectUpdate, db: DB, admin: AdminUser):
     project = crud.get_project(db, project_id)
     if project is None:
         raise HTTPException(404, "Project not found")
@@ -38,7 +39,7 @@ def update_project(project_id: int, data: ProjectUpdate, db: DB):
     return crud.update_project(db, project, data)
 
 @router.delete("/{project_id}", status_code=204)
-def delete_project(project_id: int, db: DB):
+def delete_project(project_id: int, db: DB, admin: AdminUser):
     project = crud.get_project(db, project_id)
     if project is None:
         raise HTTPException(404,"Project not found")

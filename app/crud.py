@@ -1,9 +1,35 @@
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
-from app.models import Project,Employee,Task
+from app.models import Project,Employee,Task,User
+from sqlalchemy.exc import IntegrityError
 from app.schemas import *
 from sqlalchemy import select
 from datetime import date
+
+
+def get_user(db: Session, user_id: int):
+    return db.scalar(select(User).where(User.id == user_id))
+
+
+def get_user_by_username(db: Session, username: str):
+    return db.scalar(select(User).where(User.username == username))
+
+
+def get_users(db: Session):
+    return db.scalars(select(User).order_by(User.id)).all()
+
+
+def create_user(db: Session, username: str, hashed_password: str):
+    user = User(username=username, hashed_password=hashed_password,
+                is_active=True, is_admin=False)
+    db.add(user)
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise
+    db.refresh(user)
+    return user
 
 def get_projects(db: Session):
     statement = select(Project).order_by(Project.id)
